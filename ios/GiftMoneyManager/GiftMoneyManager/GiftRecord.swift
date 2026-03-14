@@ -13,6 +13,7 @@ final class GiftRecord {
     var returnDone: Bool        // お返し済みかどうか
     var returnItem: String      // あげるもの
     var returnDate: Date?       // あげる時期
+    var reminderDate: Date?     // リマインダー日時
 
     init(
         giver: String = "",
@@ -24,7 +25,8 @@ final class GiftRecord {
         returnBudget: Int = 0,
         returnDone: Bool = false,
         returnItem: String = "",
-        returnDate: Date? = nil
+        returnDate: Date? = nil,
+        reminderDate: Date? = nil
     ) {
         self.giver = giver
         self.receivedItem = receivedItem
@@ -36,6 +38,7 @@ final class GiftRecord {
         self.returnDone = returnDone
         self.returnItem = returnItem
         self.returnDate = returnDate
+        self.reminderDate = reminderDate
     }
 
     /// お返しの目安を金額の半額で自動計算

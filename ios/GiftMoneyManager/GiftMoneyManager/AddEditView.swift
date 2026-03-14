@@ -20,6 +20,10 @@ struct AddEditView: View {
     @State private var returnItem = ""
     @State private var hasReturnDate = false
     @State private var returnDate = Date()
+    @State private var hasReminder = false
+    @State private var reminderDate = Date()
+
+    @StateObject private var notificationManager = NotificationManager.shared
 
     private var isEditing: Bool { record != nil }
 
@@ -108,6 +112,39 @@ struct AddEditView: View {
                 }
 
                 Toggle("お返し済み", isOn: $returnDone)
+                    .onChange(of: returnDone) { _, done in
+                        if done { hasReminder = false }
+                    }
+
+                reminderRows
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var reminderRows: some View {
+        if !returnDone {
+            Toggle("リマインダーを設定", isOn: $hasReminder)
+                .onChange(of: hasReminder) { _, on in
+                    if on && notificationManager.authorizationStatus == .notDetermined {
+                        Task { await notificationManager.requestPermission() }
+                    }
+                }
+
+            if hasReminder {
+                if notificationManager.authorizationStatus == .denied {
+                    Label("通知が無効です。設定アプリから許可してください。", systemImage: "bell.slash")
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                } else {
+                    DatePicker(
+                        "リマインダー日時",
+                        selection: $reminderDate,
+                        in: Date()...,
+                        displayedComponents: [.date, .hourAndMinute]
+                    )
+                    .environment(\.locale, Locale(identifier: "ja_JP"))
+                }
             }
         }
     }
@@ -141,11 +178,17 @@ struct AddEditView: View {
             hasReturnDate = true
             returnDate = rd
         }
+        if let rem = r.reminderDate, rem > Date() {
+            hasReminder = true
+            reminderDate = rem
+        }
     }
 
     private func save() {
         let amount = Int(amountText) ?? 0
         let returnBudget = Int(returnBudgetText) ?? 0
+
+        let effectiveReminderDate = hasReturn && hasReminder && !returnDone ? reminderDate : nil
 
         if let r = record {
             // 更新
@@ -159,6 +202,8 @@ struct AddEditView: View {
             r.returnDone = returnDone
             r.returnItem = returnItem
             r.returnDate = hasReturn && hasReturnDate ? returnDate : nil
+            r.reminderDate = effectiveReminderDate
+            scheduleOrCancelReminder(for: r)
         } else {
             // 新規
             let newRecord = GiftRecord(
@@ -171,11 +216,21 @@ struct AddEditView: View {
                 returnBudget: returnBudget,
                 returnDone: returnDone,
                 returnItem: returnItem,
-                returnDate: hasReturn && hasReturnDate ? returnDate : nil
+                returnDate: hasReturn && hasReturnDate ? returnDate : nil,
+                reminderDate: effectiveReminderDate
             )
             modelContext.insert(newRecord)
+            scheduleOrCancelReminder(for: newRecord)
         }
 
         dismiss()
+    }
+
+    private func scheduleOrCancelReminder(for record: GiftRecord) {
+        if record.reminderDate != nil {
+            Task { await NotificationManager.shared.scheduleReturnReminder(for: record) }
+        } else {
+            NotificationManager.shared.cancelReturnReminder(for: record)
+        }
     }
 }

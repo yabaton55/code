@@ -8,6 +8,9 @@ struct DetailView: View {
     @Bindable var record: GiftRecord
     @State private var showingEditSheet = false
     @State private var showingDeleteAlert = false
+    @State private var hasPendingReminder = false
+
+    @StateObject private var notificationManager = NotificationManager.shared
 
     var body: some View {
         List {
@@ -35,6 +38,21 @@ struct DetailView: View {
         }
         .sheet(isPresented: $showingEditSheet) {
             AddEditView(record: record)
+        }
+        .onAppear {
+            Task { hasPendingReminder = await notificationManager.hasPendingReminder(for: record) }
+        }
+        .onChange(of: showingEditSheet) { _, isShowing in
+            if !isShowing {
+                Task { hasPendingReminder = await notificationManager.hasPendingReminder(for: record) }
+            }
+        }
+        .onChange(of: record.returnDone) { _, done in
+            if done {
+                notificationManager.cancelReturnReminder(for: record)
+                record.reminderDate = nil
+                hasPendingReminder = false
+            }
         }
         .alert("削除しますか？", isPresented: $showingDeleteAlert) {
             Button("削除", role: .destructive) {
@@ -83,6 +101,28 @@ struct DetailView: View {
                     DetailRow(label: "あげる時期", value: formattedDate(rd), icon: "calendar.badge.clock", color: .teal)
                 }
                 returnStatusRow
+                if !record.returnDone {
+                    reminderRow
+                }
+            }
+        }
+    }
+
+    private var reminderRow: some View {
+        HStack(spacing: 12) {
+            Image(systemName: hasPendingReminder ? "bell.fill" : "bell.slash")
+                .foregroundStyle(hasPendingReminder ? .yellow : .secondary)
+                .frame(width: 24)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("リマインダー").font(.caption).foregroundStyle(.secondary)
+                if let rd = record.reminderDate, hasPendingReminder {
+                    Text(formattedDateTime(rd))
+                        .font(.body)
+                } else {
+                    Text("未設定")
+                        .font(.body)
+                        .foregroundStyle(.secondary)
+                }
             }
         }
     }
@@ -125,6 +165,14 @@ struct DetailView: View {
     private func formattedDate(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateStyle = .long
+        formatter.locale = Locale(identifier: "ja_JP")
+        return formatter.string(from: date)
+    }
+
+    private func formattedDateTime(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .long
+        formatter.timeStyle = .short
         formatter.locale = Locale(identifier: "ja_JP")
         return formatter.string(from: date)
     }
