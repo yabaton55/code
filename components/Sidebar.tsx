@@ -1,13 +1,14 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, List, Calendar, Upload } from "lucide-react";
+import { LayoutDashboard, List, Calendar, Upload, Sword } from "lucide-react";
 
 const nav = [
   { href: "/", label: "ダッシュボード", icon: LayoutDashboard },
   { href: "/watchlist", label: "ウォッチリスト", icon: List },
   { href: "/calendar", label: "カレンダー", icon: Calendar },
   { href: "/import", label: "インポート", icon: Upload },
+  { href: "/roguelike", label: "ダンジョンRPG", icon: Sword },
 ];
 
 export default function Sidebar() {
