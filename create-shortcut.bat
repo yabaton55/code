@@ -1,10 +1,21 @@
 @echo off
 cd /d "%~dp0"
+
+:: VBScriptで一時ファイルを作成してショートカットを生成
+set VBS=%TEMP%\mkshortcut.vbs
 set TARGET=%~dp0start.bat
 set SHORTCUT=%USERPROFILE%\Desktop\銘柄ウォッチ起動.lnk
-set ICON=%SystemRoot%\System32\shell32.dll
 
-powershell -NoProfile -Command "$ws = New-Object -ComObject WScript.Shell; $s = $ws.CreateShortcut('%SHORTCUT%'); $s.TargetPath = '%TARGET%'; $s.WorkingDirectory = '%~dp0'; $s.IconLocation = '%ICON%,21'; $s.Description = '銘柄ウォッチ起動'; $s.Save()"
+echo Set ws = CreateObject("WScript.Shell") > "%VBS%"
+echo Set s = ws.CreateShortcut("%SHORTCUT%") >> "%VBS%"
+echo s.TargetPath = "%TARGET%" >> "%VBS%"
+echo s.WorkingDirectory = "%~dp0" >> "%VBS%"
+echo s.IconLocation = "%SystemRoot%\System32\shell32.dll,21" >> "%VBS%"
+echo s.Description = "銘柄ウォッチ起動" >> "%VBS%"
+echo s.Save() >> "%VBS%"
+
+cscript //nologo "%VBS%"
+del "%VBS%"
 
 echo デスクトップにショートカットを作成しました。
 pause
