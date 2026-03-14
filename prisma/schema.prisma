@@ -1,0 +1,39 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Stock {
+  id        String     @id @default(cuid())
+  ticker    String     @unique
+  name      String
+  market    String?
+  sector    String?
+  memo      String?
+  tags      String     @default("[]")
+  archived  Boolean    @default(false)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  catalysts Catalyst[]
+}
+
+model Catalyst {
+  id            String    @id @default(cuid())
+  stockId       String
+  stock         Stock     @relation(fields: [stockId], references: [id], onDelete: Cascade)
+  title         String
+  category      String    @default("その他")
+  scheduledDate DateTime?
+  scheduledQ    String?
+  importance    String    @default("Medium")
+  status        String    @default("pending")
+  sourceType    String?
+  sourceUrl     String?
+  memo          String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
