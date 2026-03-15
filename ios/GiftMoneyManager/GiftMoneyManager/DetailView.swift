@@ -25,6 +25,9 @@ struct DetailView: View {
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Menu {
+                    ShareLink(item: shareText) {
+                        Label("共有", systemImage: "square.and.arrow.up")
+                    }
                     Button("編集", systemImage: "pencil") {
                         showingEditSheet = true
                     }
@@ -158,6 +161,41 @@ struct DetailView: View {
             Text(record.notes)
                 .font(.body)
         }
+    }
+
+    // MARK: - Share
+
+    private var shareText: String {
+        var lines: [String] = ["【贈り物メモ】"]
+        lines.append("もらった人：\(record.giver)")
+        if !record.receivedItem.isEmpty {
+            lines.append("もらったもの：\(record.receivedItem)")
+        }
+        lines.append("時期：\(formattedDate(record.receivedDate))")
+        lines.append("金額：\(formattedAmount(record.amount))")
+
+        if record.hasReturn {
+            lines.append("")
+            lines.append("【お返し情報】")
+            let budget = record.returnBudget > 0 ? record.returnBudget : record.suggestedReturnBudget()
+            lines.append("目安：\(formattedAmount(budget))")
+            if !record.returnItem.isEmpty {
+                lines.append("あげるもの：\(record.returnItem)")
+            }
+            if let rd = record.returnDate {
+                lines.append("あげる時期：\(formattedDate(rd))")
+            }
+            lines.append("状態：\(record.returnDone ? "返礼済み" : "返礼未了")")
+        } else {
+            lines.append("お返し：不要")
+        }
+
+        if !record.notes.isEmpty {
+            lines.append("")
+            lines.append("備考：\(record.notes)")
+        }
+
+        return lines.joined(separator: "\n")
     }
 
     // MARK: - Helpers
