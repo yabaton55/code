@@ -119,6 +119,7 @@ export function createInitialState(): GameState {
 
 // ===== SAVE / LOAD =====
 export function saveGame(state: GameState): void {
+  if (typeof window === 'undefined') return;
   try {
     const data = {
       player: state.player,
@@ -130,6 +131,7 @@ export function saveGame(state: GameState): void {
 }
 
 export function loadGame(): Partial<GameState> | null {
+  if (typeof window === 'undefined') return null;
   try {
     const raw = localStorage.getItem(SAVE_KEY);
     if (!raw) return null;
@@ -141,6 +143,7 @@ export function loadGame(): Partial<GameState> | null {
 }
 
 export function hasSave(): boolean {
+  if (typeof window === 'undefined') return false;
   return !!localStorage.getItem(SAVE_KEY);
 }
 

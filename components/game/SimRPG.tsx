@@ -120,6 +120,7 @@ function MessageLog({ messages }: { messages: string[] }) {
 // ===== MAIN COMPONENT =====
 export default function SimRPG() {
   const [gs, setGs] = useState<GameState>(createInitialState);
+  const [saveExists, setSaveExists] = useState(false);
   const [inputName, setInputName] = useState('勇者');
   const [selectedJob, setSelectedJob] = useState<JobClass>('warrior');
   const [selectedTarget, setSelectedTarget] = useState(0);
@@ -132,6 +133,8 @@ export default function SimRPG() {
   const [shopTab, setShopTab] = useState<'buy' | 'sell' | 'craft'>('buy');
   const [newAchievements, setNewAchievements] = useState<string[]>([]);
   const [prevPhase, setPrevPhase] = useState<GamePhase>('town');
+
+  useEffect(() => { setSaveExists(hasSave()); }, []);
 
   const addMessages = useCallback((msgs: string[]) => {
     setGs(g => ({ ...g, messages: [...g.messages, ...msgs].slice(-100) }));
@@ -479,7 +482,7 @@ export default function SimRPG() {
             className="py-3 px-6 bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-500 hover:to-yellow-400 text-black font-bold rounded-lg text-lg transition-all">
             ⚔️ 新しいゲーム
           </button>
-          {hasSave() && (
+          {saveExists && (
             <button onClick={handleLoadGame}
               className="py-3 px-6 bg-gradient-to-r from-blue-700 to-blue-600 hover:from-blue-600 hover:to-blue-500 text-white font-bold rounded-lg text-lg transition-all">
               💾 続きから
@@ -586,7 +589,7 @@ export default function SimRPG() {
             className="py-2 px-6 bg-gray-700 hover:bg-gray-600 text-white rounded-lg">
             タイトルへ
           </button>
-          {hasSave() && (
+          {saveExists && (
             <button onClick={handleLoadGame}
               className="py-2 px-6 bg-blue-700 hover:bg-blue-600 text-white rounded-lg">
               ロードする
